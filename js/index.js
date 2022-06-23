@@ -9,7 +9,23 @@ c.fillRect(0, 0, canvas.width, canvas.height)
 /// CREATE GRAVITY
 const gravity = 0.7
 
+const background = new Sprite({
+    position:{
+        x:0,
+        y:0
+    },
+    imageSrc: './img/background.png'
+})
 
+const shop = new Sprite({
+    position:{
+        x:600,
+        y:129
+    },
+    imageSrc: './img/shop.png',
+    scale: 2.75,
+    framesMax: 6
+})
 
 // CREATE PLAYER AND ENEMY SPRITES
 const player = new Fighter({
@@ -24,7 +40,9 @@ const player = new Fighter({
     offset: {
         x:0,
         y:0
-    }
+    },
+    imageSrc: './img/samuraiMack/Idle.png',
+    framesMax: 8
 })
 
 const enemy = new Fighter({
@@ -40,7 +58,9 @@ const enemy = new Fighter({
     offset: {
         x:-50,
         y:0
-    }
+    },
+    imageSrc: './img/kenji/Idle.png',
+    framesMax: 8
 })
 
 const keys = {
@@ -58,47 +78,14 @@ const keys = {
     }
 }
 
-function rectangularCollision({ rectangle1, rectangle2 }) {
-    return (
-        rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x
-        && rectangle1.attackBox.position.x <= rectangle2.position.x + rectangle2.width
-        && rectangle1.attackBox.position.y + rectangle1.attackBox.height >= rectangle2.position.y
-        && rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
-    )
-}
-
-function determineWinner({ player, enemy, timerID }) {
-    clearTimeout(timerID)
-    document.querySelector('#displayText').style.display = 'flex'
-    if (player.health === enemy.health) {
-        document.querySelector('#displayText').innerHTML = 'Tie'
-    } else if (player.health > enemy.health) {
-        document.querySelector('#displayText').innerHTML = 'Player 1 Wins'
-    } else {
-        document.querySelector('#displayText').innerHTML = 'Player 2 Wins'
-    }
-}
-
-let timer = 60
-let timerID
-function decreaseTimer() {
-    if (timer > 0) {
-    timerID = setTimeout(decreaseTimer, 1000)
-    timer--
-    document.querySelector("#timer").innerHTML = timer
-    }
-
-    if (timer === 0) {
-        determineWinner({player, enemy, timerID })
-    }
-}
-
 decreaseTimer()
 
 function animate() {
     window.requestAnimationFrame(animate)
     c.fillStyle = 'black'
     c.fillRect(0,0,canvas.width,canvas.height)
+    background.update()
+    shop.update()
     player.update()
     enemy.update()
 
@@ -120,13 +107,13 @@ function animate() {
     // COLLISION DETECTION
     if (rectangularCollision({ rectangle1:player, rectangle2:enemy }) && player.isAttacking) {
         player.isAttacking = false
-        enemy.health -= 10
+        if (player.health > 0 && enemy.health > 0) { enemy.health -= 10 }
         document.querySelector('#enemyHealth').style.width = enemy.health + '%'
     }
 
     if (rectangularCollision({ rectangle1:enemy, rectangle2:player }) && enemy.isAttacking) {
         enemy.isAttacking = false
-        player.health -= 10
+        if (player.health > 0 && enemy.health > 0) { player.health -= 10 }
         document.querySelector('#playerHealth').style.width = player.health + '%'
         console.log('ENEMY ATTACKY!!!')
     }

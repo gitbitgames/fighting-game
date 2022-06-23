@@ -1,26 +1,65 @@
 // SPRITE DRAWER
 class Sprite {
-    constructor({ position, imageSrc }) {
+    constructor({ position, imageSrc, scale=1, framesMax = 1 }) {
         this.position = position
         this.width = 50
         this.height = 150
         this.image = new Image()
         this.image.src = imageSrc
+        this.scale = scale
+        this.framesMax = framesMax
+        this.framesCurrent = 0
+        this.framesElapsed = 0
+        this.framesHold = 10
     }
 
     draw() {
-        c.drawImage(this.image, this.position.x, this.position.y)
+        c.drawImage(
+            this.image,
+            this.framesCurrent * (this.image.width / this.framesMax),
+            0,
+            this.image.width / this.framesMax,
+            this.image.height,
+            this.position.x,
+            this.position.y,
+            (this.image.width / this.framesMax) * this.scale,
+            this.image.height * this.scale
+        )
     }
 
     update() {
         this.draw()
+        this.framesElapsed++
+
+        if (this.framesElapsed % this.framesHold === 0) {
+            if (this.framesCurrent < this.framesMax - 1) {
+                this.framesCurrent++
+            } else {
+                this.framesCurrent = 0
+            }
+        }
     }
 };
 
 // PLAYER CREATION
-class Fighter {
-    constructor({ position, velocity, color='red', offset } ) {
-        this.position = position
+class Fighter extends Sprite {
+    constructor({
+        position,
+        velocity,
+        color='red',
+        offset,
+        imageSrc,
+        scale=1,
+        framesMax = 1
+        } ) {
+        
+        super({
+            position,
+            imageSrc,
+            scale,
+            framesMax,
+        })
+
         this.velocity = velocity
         this.width = 50
         this.height = 150
@@ -37,22 +76,9 @@ class Fighter {
             height: 50
         }
         this.isAttacking
-    }
-
-    draw() {
-        c.fillStyle = this.color
-        c.fillRect(this.position.x, this.position.y, this.width, this.height)
-
-        // ATTACK BOX
-        if (this.isAttacking) {
-            c.fillStyle = 'green'
-            c.fillRect(
-                this.attackBox.position.x,
-                this.attackBox.position.y,
-                this.attackBox.width,
-                this.attackBox.height,
-                )
-        }
+        this.framesCurrent = 0
+        this.framesElapsed = 0
+        this.framesHold = 10
     }
 
     update() {
@@ -64,7 +90,7 @@ class Fighter {
         this.position.x += this.velocity.x
         
         // STOP PLAYERS FROM GOING THROUGH FLOOR
-        if (this.position.y + this.height + this.velocity.y >= canvas.height) {
+        if (this.position.y + this.height + this.velocity.y >= canvas.height - 95) {
             this.velocity.y = 0
         } else this.velocity.y += gravity
     }
