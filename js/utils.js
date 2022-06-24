@@ -32,3 +32,12 @@ function decreaseTimer() {
         determineWinner({player, enemy, timerID })
     }
 }
+
+function attackDelay(attacker) {
+    if (attacker === '1') {
+        p1Attack = true
+    }
+    if (attacker === '2') {
+        p2Attack = true
+    }
+}

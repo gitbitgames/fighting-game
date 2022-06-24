@@ -7,7 +7,9 @@ canvas.height = 576
 c.fillRect(0, 0, canvas.width, canvas.height)
 
 /// CREATE GRAVITY
-const gravity = 0.5
+const gravity = 0.4
+let p1Attack = true
+let p2Attack = true
 
 const background = new Sprite({
     position:{
@@ -72,6 +74,14 @@ const player = new Fighter({
         attack2: {
             imageSrc: './img/samuraiMack/Attack2.png',
             framesMax: 6
+        },
+        takeHit: {
+            imageSrc: './img/samuraiMack/Take Hit - white silhouette.png',
+            framesMax: 4
+        },
+        death: {
+            imageSrc: './img/samuraiMack/Death.png',
+            framesMax: 6
         }
     },
     attackBox: {
@@ -79,7 +89,7 @@ const player = new Fighter({
             x:60,
             y:0
         },
-        width: 200, height: 150
+        width: 192, height: 150
     }
 })
 
@@ -128,6 +138,14 @@ const enemy = new Fighter({
         attack2: {
             imageSrc: './img/kenji/Attack2.png',
             framesMax: 4
+        },
+        takeHit: {
+            imageSrc: './img/kenji/Take hit.png',
+            framesMax: 3
+        },
+        death: {
+            imageSrc: './img/kenji/Death.png',
+            framesMax: 7
         }
     },
     attackBox: {
@@ -162,6 +180,8 @@ function animate() {
     c.fillRect(0,0,canvas.width,canvas.height)
     background.update()
     shop.update()
+    c.fillStyle = 'rgba(255, 255, 255, 0.12)'
+    c.fillRect(0,0,canvas.width,canvas.height)
     player.update()
     enemy.update()
 
@@ -207,8 +227,16 @@ function animate() {
     // COLLISION DETECTION
     if (rectangularCollision({ rectangle1:player, rectangle2:enemy }) && player.isAttacking && player.framesCurrent === 4) {
         player.isAttacking = false
-        if (player.health > 0 && enemy.health > 0 && timer > 0) { enemy.health -= 12 }
-        document.querySelector('#enemyHealth').style.width = enemy.health + '%'
+        if (player.health > 0 && enemy.health > 0 && timer > 0) {
+            if (enemy.health < 15) {
+                enemy.health -= enemy.health
+            } else { enemy.health -= 15 }
+        }
+        enemy.takeHit()
+        
+        gsap.to('#enemyHealth', {
+            width: enemy.health + '%'
+        })
     }
 
     // IF PLAYER MISSES
@@ -218,8 +246,14 @@ function animate() {
 
     if (rectangularCollision({ rectangle1:enemy, rectangle2:player }) && enemy.isAttacking) {
         enemy.isAttacking = false
-        if (player.health > 0 && enemy.health > 0 && timer > 0) { player.health -= 10 }
-        document.querySelector('#playerHealth').style.width = player.health + '%'
+        if (player.health > 0 && enemy.health > 0 && timer > 0) {
+            player.health -= 10
+        }
+        player.takeHit()
+
+        gsap.to('#playerHealth', {
+            width: player.health + '%'
+        })
     }
 
     // IF ENEMY MISSES
@@ -238,40 +272,76 @@ window.addEventListener('keydown', (event) => {
     // PLAYER MOVEMENT
     switch (event.key) {
         case 'd':
+            if (player.dead === true) return
             keys.d.pressed = true
             player.lastKey = 'd'
             break;
         case 'a':
+            if (player.dead === true) return
             keys.a.pressed = true
             player.lastKey = 'a'
             break
         case 'w':
-            player.velocity.y = -15
+            if (player.dead === true) return
+            if (player.position.y === 330) {
+            player.velocity.y = -12 }
+            break 
+        case 'v':
+            if (player.dead === true) return
+            if (player.image !== player.sprites.attack1.img && player.image !== player.sprites.attack2.image && p1Attack) {
+                p1Attack = false
+                player.attack('1')
+                setTimeout(function() {
+                    attackDelay('1')
+                }, 500)
+            }
             break
-        case ' ':
-            player.attack('1')
-            break
-        case 'f':
-            player.attack('2')
+        case 'b':
+            if (player.dead === true) return
+            if (player.image !== player.sprites.attack1.img && player.image !== player.sprites.attack2.image && p1Attack) {
+                p1Attack = false
+                player.attack('2')
+                setTimeout(function() {
+                    attackDelay('1')
+                }, 500)
+            }
             break;
 
     // ENEMY MOVEMENT
         case 'ArrowRight':
+            if (enemy.dead === true) return
             keys.ArrowRight.pressed = true
             enemy.lastKey = 'ArrowRight'
             break;
         case 'ArrowLeft':
+            if (enemy.dead === true) return
             keys.ArrowLeft.pressed = true
             enemy.lastKey = 'ArrowLeft'
             break
         case 'ArrowUp':
-            enemy.velocity.y = -20
+            if (enemy.dead === true) return
+            if (enemy.position.y === 330) {
+            enemy.velocity.y = -15 }
             break
-        case 'ArrowDown':
-            enemy.attack('1')
+        case 'k':
+            if (enemy.dead === true) return
+            if (enemy.image !== enemy.sprites.attack1.img && enemy.image !== enemy.sprites.attack2.image && p2Attack) {
+                p2Attack = false
+                enemy.attack('1')
+                setTimeout(function() {
+                    attackDelay('2')
+                }, 320)            }
             break
         case 'l':
-            enemy.attack('2')
+            if (enemy.dead === true) return
+            if (enemy.image !== enemy.sprites.attack1.img && enemy.image !== enemy.sprites.attack2.imag && p2Attack) {
+                p2Attack = false
+                enemy.attack('2')
+                setTimeout(function() {
+                    attackDelay('2')
+                }, 320)
+            }
+            break
     }
 })
 
