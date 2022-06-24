@@ -7,7 +7,7 @@ canvas.height = 576
 c.fillRect(0, 0, canvas.width, canvas.height)
 
 /// CREATE GRAVITY
-const gravity = 0.7
+const gravity = 0.5
 
 const background = new Sprite({
     position:{
@@ -64,7 +64,22 @@ const player = new Fighter({
         fall: {
             imageSrc: './img/samuraiMack/Fall.png',
             framesMax: 2
+        },
+        attack1: {
+            imageSrc: './img/samuraiMack/Attack1.png',
+            framesMax: 6
+        },
+        attack2: {
+            imageSrc: './img/samuraiMack/Attack2.png',
+            framesMax: 6
         }
+    },
+    attackBox: {
+        offset: {
+            x:60,
+            y:0
+        },
+        width: 200, height: 150
     }
 })
 
@@ -81,14 +96,47 @@ const enemy = new Fighter({
     offset: {
         x:-50,
         y:0
+    },
+    imageSrc: './img/kenji/Idle.png',
+    framesMax: 4,
+    scale: 2.5,
+    offset: {
+        x:215,
+        y:170
+    },
+    sprites: {
+        idle: {
+            imageSrc: './img/kenji/Idle.png',
+            framesMax: 4
+        },
+        run: {
+            imageSrc: './img/kenji/Run.png',
+            framesMax: 8
+        },
+        jump: {
+            imageSrc: './img/kenji/Jump.png',
+            framesMax: 2
+        },
+        fall: {
+            imageSrc: './img/kenji/Fall.png',
+            framesMax: 2
+        },
+        attack1: {
+            imageSrc: './img/kenji/Attack1.png',
+            framesMax: 4
+        },
+        attack2: {
+            imageSrc: './img/kenji/Attack2.png',
+            framesMax: 4
+        }
+    },
+    attackBox: {
+        offset: {
+            x:-160,
+            y:0
+        },
+        width: 170, height: 130
     }
-    // imageSrc: './img/kenji/Idle.png',
-    // framesMax: 8,
-    // scale: 2.5,
-    // offset: {
-    //     x:215,
-    //     y:170
-    // }
 })
 
 const keys = {
@@ -115,7 +163,7 @@ function animate() {
     background.update()
     shop.update()
     player.update()
-    // enemy.update()
+    enemy.update()
 
     player.velocity.x = 0
     enemy.velocity.x = 0
@@ -141,32 +189,47 @@ function animate() {
     // ENEMY MOVEMENT
     if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
         enemy.velocity.x = -5
-        enemy.image = enemy.sprites.run.image
+        enemy.switchSprite('run')
 
     } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
         enemy.velocity.x = 5
-        enemy.image = enemy.sprites.run.image
+        enemy.switchSprite('run')
+    } else {
+        enemy.switchSprite('idle')
+    }
 
+    if (enemy.velocity.y < 0) {
+        enemy.switchSprite('jump')
+    } else if (enemy.velocity.y > 0) {
+        enemy.switchSprite('fall')
     }
 
     // COLLISION DETECTION
-    if (rectangularCollision({ rectangle1:player, rectangle2:enemy }) && player.isAttacking) {
+    if (rectangularCollision({ rectangle1:player, rectangle2:enemy }) && player.isAttacking && player.framesCurrent === 4) {
         player.isAttacking = false
-        if (player.health > 0 && enemy.health > 0) { enemy.health -= 10 }
+        if (player.health > 0 && enemy.health > 0 && timer > 0) { enemy.health -= 12 }
         document.querySelector('#enemyHealth').style.width = enemy.health + '%'
+    }
+
+    // IF PLAYER MISSES
+    if (player.isAttacking && player.framesCurrent === 4) {
+        player.isAttacking = false
     }
 
     if (rectangularCollision({ rectangle1:enemy, rectangle2:player }) && enemy.isAttacking) {
         enemy.isAttacking = false
-        if (player.health > 0 && enemy.health > 0) { player.health -= 10 }
+        if (player.health > 0 && enemy.health > 0 && timer > 0) { player.health -= 10 }
         document.querySelector('#playerHealth').style.width = player.health + '%'
-        console.log('ENEMY ATTACKY!!!')
+    }
+
+    // IF ENEMY MISSES
+    if (enemy.isAttacking && enemy.framesCurrent === 2) {
+        enemy.isAttacking = false
     }
 
     if (enemy.health <= 0 || player.health <= 0) {
         determineWinner({ player, enemy, timerID })
     }
-
 }
 
 animate()
@@ -186,8 +249,11 @@ window.addEventListener('keydown', (event) => {
             player.velocity.y = -15
             break
         case ' ':
-            player.attack()
+            player.attack('1')
             break
+        case 'f':
+            player.attack('2')
+            break;
 
     // ENEMY MOVEMENT
         case 'ArrowRight':
@@ -202,10 +268,11 @@ window.addEventListener('keydown', (event) => {
             enemy.velocity.y = -20
             break
         case 'ArrowDown':
-            enemy.isAttacking = true
+            enemy.attack('1')
             break
+        case 'l':
+            enemy.attack('2')
     }
-    
 })
 
 window.addEventListener('keyup', (event) => {

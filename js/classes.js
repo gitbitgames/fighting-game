@@ -1,4 +1,4 @@
-// SPRITE DRAWER
+// DRAWS THE SPRITE ANIMATIONS
 class Sprite {
     constructor({ position, imageSrc, scale=1, framesMax = 1, offset = {x:0, y:0} }) {
         this.position = position
@@ -56,7 +56,8 @@ class Fighter extends Sprite {
         scale=1,
         framesMax = 1,
         offset = {x:0, y:0},
-        sprites
+        sprites,
+        attackBox = { offset: {}, width: undefined, height: undefined }
     }) {
         
         super({
@@ -78,9 +79,9 @@ class Fighter extends Sprite {
                 x: this.position.x,
                 y: this.position.y
             },
-            offset,
-            width: 100,
-            height: 50
+            offset: attackBox.offset,
+            width: attackBox.width,
+            height: attackBox.height
         }
         this.isAttacking
         this.framesCurrent = 0
@@ -101,23 +102,28 @@ class Fighter extends Sprite {
         this.attackBox.position.x = this.position.x + this.attackBox.offset.x
         this.attackBox.position.y = this.position.y
 
+        c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height)
+
         this.position.y += this.velocity.y
         this.position.x += this.velocity.x
         
-        // STOP PLAYERS FROM GOING THROUGH FLOOR
-        if (this.position.y + this.height + this.velocity.y >= canvas.height - 95) {
+        // ESTABLISH A GAMEPLAY FLOOR AND ADD GRAVITY
+        if (this.position.y + this.height + this.velocity.y >= canvas.height - 97) {
             this.velocity.y = 0
+            this.position.y = 330
         } else this.velocity.y += gravity
     }
 
-    attack() {
+    attack(attack_type) {
+        if (attack_type === '1') this.switchSprite('attack1')
+        if (attack_type === '2') this.switchSprite('attack2')
         this.isAttacking = true
-        setTimeout( () => {
-            this.isAttacking = false
-        }, 100 )
     }
 
     switchSprite(sprite) {
+        if (this.image === this.sprites.attack1.image && this.framesCurrent < this.sprites.attack1.framesMax - 1) return
+        if (this.image === this.sprites.attack2.image && this.framesCurrent < this.sprites.attack2.framesMax - 1) return
+
         switch(sprite) {
             case 'idle':
                 if (this.image !== this.sprites.idle.image) {
@@ -146,6 +152,20 @@ class Fighter extends Sprite {
                 if (this.image !== this.sprites.fall.image) {
                     this.image = this.sprites.fall.image
                     this.framesMax = this.sprites.fall.framesMax
+                    this.framesCurrent = 0
+                }
+                break
+            case 'attack1':
+                if (this.image !== this.sprites.attack1.image) {
+                    this.image = this.sprites.attack1.image
+                    this.framesMax = this.sprites.attack1.framesMax
+                    this.framesCurrent = 0
+                }
+                break
+            case 'attack2':
+                if (this.image !== this.sprites.attack2.image) {
+                    this.image = this.sprites.attack2.image
+                    this.framesMax = this.sprites.attack2.framesMax
                     this.framesCurrent = 0
                 }
                 break
